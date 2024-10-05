@@ -3,7 +3,7 @@ name = "slide-doctor"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "asyncio>=3.4.3",
     "langchain>=0.3.2",
