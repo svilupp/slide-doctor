@@ -1,0 +1,45 @@
+# Information about sample data: known issues with slides
+slides:
+  slide_001:
+    broken_elements:
+      - "title:grammar:bad_spellcheck"
+      - "textbox:format:wrap_fail"
+
+  slide_002:
+    broken_elements:
+      - "textbox:font:inconsistent_color"
+
+  slide_003:
+    broken_elements:
+      - "text_bad_spacing"
+
+  slide_004:
+    broken_elements:
+      - "textbox:format:extra_spacing"
+
+  slide_005:
+    broken_elements:
+      - "textbox:font:inconsistent_size"
+      - "textbox:format:extra_line"
+
+  slide_006:
+    broken_elements:
+      - "textbox:position:overlap_item"
+
+  slide_007:
+    broken_elements:
+      - "table:format:wrong_alignment"
+      - "textbox:format:extra_line"
+
+  slide_008:
+    broken_elements:
+      - "table:format:wrong_number_format"
+
+  slide_009:
+    broken_elements:
+      - "textbox:format:incorrect_wrap"
+      - "chart:position:clip"
+
+  slide_010:
+    broken_elements:
+      - "title:grammar:bad_spellcheck"
