@@ -13,4 +13,6 @@ dependencies = [
     "python-pptx>=1.0.2",
     "fitz>=0.0.1.dev2",
     "pydantic>=2.9.2",
+    "instructor>=1.5.1",
+    "mistralai>=1.1.0",
 ]
