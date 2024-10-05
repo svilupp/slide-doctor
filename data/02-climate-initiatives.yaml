@@ -1,0 +1,43 @@
+# Information about sample data: known issues with slides
+slides:
+  slide_000:
+    broken_elements:
+      - "title:text:incorrect_date"
+
+  slide_001:
+    broken_elements:
+      - "image:size:stretching_distortion"
+
+  slide_002:
+    broken_elements:
+      - "textbox:position:overlap_item"
+
+  slide_003:
+    broken_elements:
+      - "textbox:format:incorrect_line_high"
+      - "textbox:position:clip"
+
+  slide_004:
+    broken_elements:
+      - "textbox:position:overlap_item"
+
+  slide_005:
+    broken_elements:
+      - "textbox:position:horizontal_alignment"
+
+  slide_006:
+    broken_elements:
+      - "table:format:incorrect_wrap"
+      - "table:text:incorrect_hyphen"
+      - "table:text:text_bad_spacing"
+
+  slide_007:
+    broken_elements:
+      - "chart:text:text_bad_spacing"
+
+  slide_008:
+    broken_elements:
+      - "textbox:format:incorrect_line_high"
+
+  slide_009:
+    broken_elements:

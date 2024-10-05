@@ -11,7 +11,7 @@ slides:
 
   slide_002:
     broken_elements:
-      - "text_bad_spacing"
+      - "textbox:text:text_bad_spacing"
 
   slide_003:
     broken_elements:
