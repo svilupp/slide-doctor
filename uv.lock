@@ -1592,6 +1592,7 @@ dependencies = [
     { name = "langchain-mistralai" },
     { name = "pandas" },
     { name = "pillow" },
+    { name = "pydantic" },
     { name = "python-pptx" },
 ]
 
@@ -1603,6 +1604,7 @@ requires-dist = [
     { name = "langchain-mistralai", specifier = ">=0.2.0" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "pillow", specifier = ">=10.4.0" },
+    { name = "pydantic", specifier = ">=2.9.2" },
     { name = "python-pptx", specifier = ">=1.0.2" },
 ]
 
