@@ -1,0 +1,29 @@
+# Information about sample data: known issues with slides
+slides:
+  slide_000:
+    broken_elements:
+      - "title:text:incorrect_date"
+
+  slide_001:
+    broken_elements:
+      - "textbox:format:extra_line"
+
+  slide_002:
+    broken_elements:
+      - "textbox:format:incorrect_wrap"
+
+  slide_003:
+    broken_elements:
+      - "table:format:wrong_alignment"
+
+  slide_004:
+    broken_elements:
+
+  slide_005:
+    broken_elements:
+      - "textbox:position:overlap_item"
+      - "textbox:text:unused_placeholder"
+
+  slide_006:
+    broken_elements:
+      - "textbox:font:inconsistent_font"
