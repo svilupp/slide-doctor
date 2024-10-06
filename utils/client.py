@@ -89,25 +89,3 @@ class MistralClientWrapper:
             })
         
         return messages
-
-# async def main():
-#     # Example usage
-#     client = MistralClientWrapper(api_key="your_api_key_here")
-    
-#     # Define your ResponseModel here
-#     class ExampleResponseModel(BaseModel):
-#         result: str
-
-#     messages = [
-#         {"role": "system", "content": "You are a helpful assistant."},
-#         {"role": "user", "content": "Hello, how are you?"}
-#     ]
-
-#     try:
-#         result = await client.complete_with_retry("mistral-small-latest", messages, ExampleResponseModel)
-#         print(f"Result: {result.result}")
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
-
-# if __name__ == "__main__":
-#     asyncio.run(main())
