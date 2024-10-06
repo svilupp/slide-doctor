@@ -4,8 +4,9 @@ from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_t
 import json
 import weave
 from pydantic import BaseModel
-from typing import Any, Dict
+from typing import Any, Dict, List
 from .image_utils import get_image_data_url, encode_image
+import numpy as np
 
 class MistralClientWrapper:
     def __init__(self, api_key: str):
@@ -89,3 +90,28 @@ class MistralClientWrapper:
             })
         
         return messages
+
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=1.5, min=1, max=10),
+    )
+    def get_embeddings(self, model: str, texts: List[str]) -> List[np.ndarray]:
+        """
+        Get embeddings for a list of strings.
+
+        Args:
+            model (str): The model to use for generating embeddings.
+            texts (List[str]): A list of strings to embed.
+
+        Returns:
+            List[np.ndarray]
+        """
+        try:
+            embeddings_batch_response = self.client.embeddings.create(
+                model=model,
+                inputs=texts,
+            )
+            return [np.array(embedding.embedding) for embedding in embeddings_batch_response.data]
+        except Exception as e:
+            print(f"Error getting embeddings: {e}")
+            raise

@@ -2,11 +2,6 @@ from enum import Enum
 from pydantic import BaseModel, Field
 from typing import Optional
 
-class IssueCategory(str, Enum):
-    CHART = "chart"
-    SPELL = "spell"
-    ALIGNMENT = "alignment"
-
 class IssueLocation(str, Enum):
     TITLE = "title"
     BODY_TEXT = "body_text"
@@ -21,10 +16,10 @@ class ExtractedIssue(BaseModel):
     element_location: IssueLocation = Field(
         description="The location of the element that requires fixing."
     )
-    element_identification_contains_text: Optional[str] = Field(
+    element_identification_contains_text: Optional[str] = Field(default=None,
         description="If the element to fix is a text-based element, provide a phrase of words that it contains that would uniquely identify it. Provide nothing else. If the element to fix is not text element, return null."
     )
-    element_identification_verbatim: Optional[str] = Field(
+    element_identification_verbatim: Optional[str] = Field(default=None,
         description="Describe how to uniquely describe the element to fix if it's not a text box. If the element to fix is a text element, return null."
     )
     severity: str = Field(
