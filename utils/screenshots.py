@@ -50,7 +50,7 @@ def pdf_to_images(pdf_path, output_folder):
         print(f"Saved: {img_path}")
 
         # Store in the dictionary with slide ID as key
-        slide_images[page_num + 1] = img_path
+        slide_images[page_num] = img_path
 
     print(f"All pages saved as images in {output_folder}")
     

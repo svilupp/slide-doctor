@@ -19,6 +19,7 @@ from utils.models import ExtractedIssueList, DetectedIssue
 from utils.pptx_utils import extract_text_from_pptx
 from utils.prompts import build_system_prompt, build_user_prompt
 from utils.screenshots import convert_pptx_to_images
+from utils.image_utils import encode_image, get_image_data_url
 
 IMG_PLACEHOLDER = "https://via.placeholder.com/150"
 
@@ -124,12 +125,13 @@ def process_ppt(context_info, ppt_upload):
     config = load_config('config/config.yaml')
     user_context = context_info
     output_folder = 'pics' 
+
     # Delete the 'pics' folder if it exists
     if os.path.exists('pics'):
         shutil.rmtree('pics')
         print("Deleted 'pics' folder")
 
-    print("FILE: ",ppt_upload)
+    print("FILE: ",ppt_upload.name)
 
     # Extract text from the uploaded PowerPoint file
     slides_content = extract_text_from_pptx(ppt_upload)
@@ -137,14 +139,16 @@ def process_ppt(context_info, ppt_upload):
     # Process screenshots
     img_paths = json.loads(convert_pptx_to_images(ppt_upload, output_folder))
     print("PATHS ", img_paths)
-    # screenshots = ['data/03-dickinson-basic002.png']
 
     merged_dict = {}
     for key in slides_content.keys():
         if key in img_paths:
-            print("query", key, " ",img_paths)
+            path=img_paths[str(key)]
+            print("query", key, " ",path)
+            encoded_image, image_format = encode_image(path)
+            img_payload= get_image_data_url(encoded_image, image_format)
             merged_dict[key] = {
-                "img_path": img_paths[str(key)],
+                "img_path": img_payload,
                 "text": slides_content[str(key)]
             }
 
@@ -155,8 +159,14 @@ def process_ppt(context_info, ppt_upload):
     # Create the HTML content for slide view
     slide_html = create_slide_html(issues_data, merged_dict)
     
+    # Generate summary output
+    total_issues = len(issues_data)
+    high_severity_issues = sum(1 for issue in issues_data if issue.extracted_issue.severity == "high")
+    
+    summary = f"Total issues detected: {total_issues}\n"
+    summary += f"High severity issues: {high_severity_issues}"
     # Return both the summary and the HTML content
-    return "Mock summary generated", slide_html
+    return summary, slide_html
 
 # Building the Gradio interface
 with gr.Blocks() as demo:

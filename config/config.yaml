@@ -1,88 +1,25 @@
 checkers:
   - name: chartchecker
-    task: "analyze charts for clarity, accuracy, and effectiveness"
-    type: screenshot
-    variables:
-      - date_today
-    prompt: |
-      Your task is {TASK}
+    type: 'screenshot'
+    task: "analyze any charts and tables for common mistakes"
+    criteria: |
+      - Notes: Check if any part of the chart or table needs clarification.
+      - Units: Ensure all units are consistent and appropriate for the data presented.
+      - Tagline: Verify that the chart or table has a clear and informative tagline or title (clear slide title is sufficient).
+      - Sources: Check if sources are provided where necessary and are properly cited.
+      - Axis labels: Confirm that all axes are clearly labeled with appropriate units and scales.
+      - Comments: Evaluate if any insights or comments provided are clear and add value to the chart or table.
 
-      Instructions:
-      Identify and extract the most important issues related to chart design, data representation, and visual clarity. Focus on:
-      1. Data accuracy
-      2. Axis labeling and scaling
-      3. Color usage and contrast
-      4. Legend clarity
-      5. Title and caption appropriateness
-
-      For each issue:
-      - Provide a unique location identifier (e.g., CONTAINS: "Q3 Sales Data")
-      - Assign a severity (low, medium, high) based on the broader context
-      - Describe the issue concisely
-
-      Context: {context}
+      Out of scope: The criteria apply ONLY to tables and chart slides. Ignore any other slides.
 
   - name: spellchecker
-    task: "identify spelling and grammar errors in the document"
-    type: text
-    variables:
-      - date_today
-    prompt: |
-      Your task is {TASK}
+    task: "identify spelling and grammar errors, inconsistency, bad punctuation and bad spacing"
+    type: 'text'
+    criteria: |
+      - Spelling: Wrong spelling of common words, ignore any specialized words that can be brands and names
+      - Language Consistency: Mix of British and American English in the same text
+      - Capitalization: All titles should be title-cased (eg, "Key Message"). For other text, ensure the capitalization is consistent.
+      - Punctuation: Wrong use of punctuation marks (eg, "..")
+      - Spacing: Double spacing between words, hidden whitespace characters, too many new lines
 
-      Instructions:
-      Identify and extract the most important spelling and grammar issues. Focus on:
-      1. Misspelled words
-      2. Incorrect grammar usage
-      3. Punctuation errors
-      4. Inconsistent capitalization
-      5. Typos and formatting issues
-
-      For each issue:
-      - Provide a unique location identifier (e.g., CONTAINS: "The compny's anual report")
-      - Assign a severity (low, medium, high) based on the broader context
-      - Describe the issue concisely
-
-      Context: {context}
-
-  - name: alignmentchecker
-    task: "check for proper alignment and layout of document elements"
-    type: screenshot
-    variables:
-      - date_today
-    prompt: |
-      Your task is {TASK}
-
-      Instructions:
-      Identify and extract the most important issues related to document alignment and layout. Focus on:
-      1. Text alignment (left, right, center, justified)
-      2. Consistent spacing between elements
-      3. Proper indentation
-      4. Alignment of images and captions
-      5. Consistent margins and padding
-
-      For each issue:
-      - Provide a unique location identifier (e.g., CONTAINS: "Executive Summary" heading)
-      - Assign a severity (low, medium, high) based on the broader context
-      - Describe the issue concisely
-
-      Context: {context}
-
-prompt_template: |
-  You are an expert document analyst specializing in {checker_name}.
-  
-  Your task is {TASK}
-  
-  {prompt}
-  
-  Provide your analysis in the following JSON format:
-  ```json
-  [
-    {
-      "location": "CONTAINS: '...'",
-      "severity": "low|medium|high",
-      "description": "Detailed description of the issue"
-    },
-    ...
-  ]
-  ```
+      Out of scope: Ignore any chart-specific issues, focus purely on the text problems.
