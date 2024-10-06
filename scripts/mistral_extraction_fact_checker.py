@@ -32,7 +32,7 @@ def pptx_to_json(slide_deck_path):
         4: "center_subtitle",
         5: "footer",
         6: "date",
-        7: "slide_number",
+        7: "slide_text",
         8: "header",
     }
     
@@ -68,7 +68,7 @@ class Issue(BaseModel):
     issue_category: str = Field(description="The category of the issue")
     issue_label: str = Field(description="The label of the issue")
     issue_reason: str = Field(description="Reason behind flagging this as an issue")
-    fact_check: dict = Field(default=None, description="Fact-checking results, if applicable")
+    # fact_check: dict = Field(default=None, description="Fact-checking results, if applicable")
 
 class ExtractionResult(BaseModel):
     issues: List[Issue] = Field(description="List of extracted issues")
@@ -140,13 +140,18 @@ def main():
     slides_json = pptx_to_json(slide_deck_path)
 
     for idx, slide_json in enumerate(slides_json):
-        slide_response = extract_issues(slide_json)
+
+        print("slide_json: ", slide_json)
+
         
-        # Fact-check content issues
-        for issue in slide_response.issues:
-            if issue.issue_category.lower() == "content":
+        for obj in slide_json['content']:
+            if obj['type']=="slide_text" and len(obj['text'].split()) > 5:
+                print("\nFact Checks")
                 fact_check_results = fact_check(issue.issue_label)
-                issue.fact_check = fact_check_results
+                print('fact_check_results: ', fact_check_results)
+
+
+        slide_response = extract_issues(slide_json)
 
         print("\nExtracted Issues:")
         for i, issue in enumerate(slide_response.issues, 1):
@@ -155,8 +160,6 @@ def main():
             print(f"  Category: {issue.issue_category}")
             print(f"  Label: {issue.issue_label}")
             print(f"  Reason: {issue.issue_reason}")
-            if issue.fact_check:
-                print(f"  Fact-Check: {issue.fact_check}")
 
 if __name__ == "__main__":
     main()
