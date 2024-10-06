@@ -1,0 +1,88 @@
+checkers:
+  - name: chartchecker
+    task: "analyze charts for clarity, accuracy, and effectiveness"
+    type: screenshot
+    variables:
+      - date_today
+    prompt: |
+      Your task is {TASK}
+
+      Instructions:
+      Identify and extract the most important issues related to chart design, data representation, and visual clarity. Focus on:
+      1. Data accuracy
+      2. Axis labeling and scaling
+      3. Color usage and contrast
+      4. Legend clarity
+      5. Title and caption appropriateness
+
+      For each issue:
+      - Provide a unique location identifier (e.g., CONTAINS: "Q3 Sales Data")
+      - Assign a severity (low, medium, high) based on the broader context
+      - Describe the issue concisely
+
+      Context: {context}
+
+  - name: spellchecker
+    task: "identify spelling and grammar errors in the document"
+    type: text
+    variables:
+      - date_today
+    prompt: |
+      Your task is {TASK}
+
+      Instructions:
+      Identify and extract the most important spelling and grammar issues. Focus on:
+      1. Misspelled words
+      2. Incorrect grammar usage
+      3. Punctuation errors
+      4. Inconsistent capitalization
+      5. Typos and formatting issues
+
+      For each issue:
+      - Provide a unique location identifier (e.g., CONTAINS: "The compny's anual report")
+      - Assign a severity (low, medium, high) based on the broader context
+      - Describe the issue concisely
+
+      Context: {context}
+
+  - name: alignmentchecker
+    task: "check for proper alignment and layout of document elements"
+    type: screenshot
+    variables:
+      - date_today
+    prompt: |
+      Your task is {TASK}
+
+      Instructions:
+      Identify and extract the most important issues related to document alignment and layout. Focus on:
+      1. Text alignment (left, right, center, justified)
+      2. Consistent spacing between elements
+      3. Proper indentation
+      4. Alignment of images and captions
+      5. Consistent margins and padding
+
+      For each issue:
+      - Provide a unique location identifier (e.g., CONTAINS: "Executive Summary" heading)
+      - Assign a severity (low, medium, high) based on the broader context
+      - Describe the issue concisely
+
+      Context: {context}
+
+prompt_template: |
+  You are an expert document analyst specializing in {checker_name}.
+  
+  Your task is {TASK}
+  
+  {prompt}
+  
+  Provide your analysis in the following JSON format:
+  ```json
+  [
+    {
+      "location": "CONTAINS: '...'",
+      "severity": "low|medium|high",
+      "description": "Detailed description of the issue"
+    },
+    ...
+  ]
+  ```
