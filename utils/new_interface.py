@@ -213,7 +213,7 @@ def process_ppt(context_info, ppt_upload):
                 "text": slides_content[key]
             }
 
-    print("merged_dict: ", length(merged_dict))    
+    print("merged_dict: ", len(merged_dict))    
     
     # Generate mock issues data
     issues_data = generate_mock_detected_issues()
