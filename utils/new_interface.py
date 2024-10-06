@@ -182,25 +182,41 @@ def create_slide_html(issues_data, merged_dict):
         # Access the image path directly from merged_dict
         img_path = merged_dict.get(str(slide_number), {}).get("img_path", sample_image_path)
 
-        html_content += f"<div style='border:1px solid #ddd; padding: 10px; margin: 10px 0;'><h3>Slide {slide_number}</h3>"
+        html_content += f"<div style='border:1px solid #ddd; padding: 10px; margin: 10px 0; display: flex; align-items: center;'>"
+        html_content += f"<div style='flex-grow: 1;'><h3>Slide {slide_number}</h3>"
         html_content += f"<img src='{img_path}' alt='Slide {slide_number} Preview' style='width:150px;'/>"
         for i, issue in enumerate(issues, 1):
             issue_description = issue.extracted_issue.issue_description
             severity = issue.extracted_issue.severity.capitalize()
             html_content += f"<p><strong>Issue {i}:</strong> {issue_description} (Severity: {severity})</p>"
         html_content += "</div>"
+        
+        # Add the "Resolve" button with blue color, padding, and margin
+        html_content += (
+            f"<div style='margin-left: 20px;'>"
+            f"<button id='resolve-slide-{slide_number}' "
+            f"onclick='resolveIssue({slide_number})' "
+            f"style='background-color: #007BFF; color: white; padding: 10px 15px; border: none; border-radius: 5px; margin: 5px;'>"
+            f"Resolve</button></div>"
+        )
+        
+        html_content += "</div>"
 
     return html_content
 
+
+
+def resolve_issue_callback(slide_number):
+    # This function is a placeholder for resolving issues.
+    # You can add the logic you need to resolve or handle the slide's issues.
+    print(f"Resolving issues for slide {slide_number}")
+    return f"Issues for slide {slide_number} resolved!"
 
 
 def process_ppt(context_info, ppt_upload):
     # Extract text from the uploaded PowerPoint file
     slides_content = extract_text_from_pptx(ppt_upload)
     img_paths = convert_pptx_to_images(ppt_upload, '../pics')
-
-    # print("slides_content: ", slides_content)
-    # print("img_paths: ", img_paths)
 
     slides_content = json.loads(slides_content)
     img_paths = json.loads(img_paths)
