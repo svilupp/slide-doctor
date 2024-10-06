@@ -9,6 +9,22 @@ import io
 from enum import Enum
 from pptx import Presentation
 import json
+import asyncio
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from transformers import pipeline
+import requests
+from pptx.util import Pt
+from pptx.dml.color import RGBColor
+from textblob import TextBlob
+
+
+# Constants for fact-checking
+BRAVE_API_KEY = "BSAXYZFwgCtVk6qB8WOZ5TiO3tDlNCM"
+BRAVE_SEARCH_ENDPOINT = "https://api.search.brave.com/res/v1/web/search"
+
+# Fact-Checking NLP Model
+nli_model = pipeline("text-classification", model="facebook/bart-large-mnli")
+
 
 # Initialize the Mistral client with instructor
 api_key = os.getenv("MISTRAL_API_KEY")
@@ -28,8 +44,9 @@ def pptx_to_json(slide_deck_path):
         4: "center_subtitle",
         5: "footer",
         6: "date",
-        7: "slide_number",
+        7: "slide_text",
         8: "header",
+        9: "description"
     }
     
     # Iterate over slides
@@ -93,9 +110,12 @@ class Issue(BaseModel):
 class ExtractionResult(BaseModel):
     issues: List[Issue] = Field(description="List of extracted issues")
 
-
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_fixed(1),
+    retry=retry_if_exception_type((ValueError, json.JSONDecodeError))
+)
 def extract_issues(slides_text: str) -> ExtractionResult:
-    # base64_image, image_format = encode_image(image_path)
 
     system_prompt = """
     You are an AI specialized in identifying issues in PowerPoint presentation screenshots.
@@ -123,30 +143,112 @@ def extract_issues(slides_text: str) -> ExtractionResult:
         SystemMessage(content=system_prompt),
         HumanMessage(content=[
             {"type": "text", "text": user_prompt},
-            # {
-            #     "type": "image_url",
-            #     "image_url": {
-            #         "url": f"data:image/{image_format.lower()};base64,{base64_image}"
-            #     }
-            # }
         ])
     ]
 
     response = structured_llm.invoke(prompt)
     return response
 
+
+def brave_search(query, count=5):
+    headers = {
+        "Accept": "application/json",
+        "X-Subscription-Token": BRAVE_API_KEY
+    }
+    
+    params = {
+        "q": query,
+        "count": count
+    }
+    
+    response = requests.get(BRAVE_SEARCH_ENDPOINT, headers=headers, params=params)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        response.raise_for_status()
+
+def fact_check(statement):
+    search_results = brave_search(query=statement)
+    
+    snippet_url_pairs = []
+    for result in search_results.get("web", {}).get("results", []):
+        if result.get('description'):
+            snippet_url_pairs.append((result['description'], result.get('url', 'No URL')))
+        if result.get('extra_snippets'):
+            for snippet in result['extra_snippets']:
+                snippet_url_pairs.append((snippet, result.get('url', 'No URL')))
+
+    label_dict = {"ENTAILMENT": None, "CONTRADICTION": None, "NEUTRAL": None}
+
+    for snippet, url in snippet_url_pairs:
+        result = nli_model(f"{statement} </s> {snippet}")[0]
+        label = result['label'].upper()
+        
+        if label in label_dict:
+            if label_dict[label] is None or result['score'] > label_dict[label][1]:
+                label_dict[label] = (snippet, result['score'], url)
+
+    return label_dict
+
+
+def fix_issue_on_slide(prs, slide_index, issue: Issue):
+    slide = prs.slides[slide_index]
+    
+    # Loop through all shapes in the slide to find any text to fix
+    for shape in slide.shapes:
+        if shape.has_text_frame:
+            # Handle spelling issues by running a spell checker on the text in the shape
+            elif issue.issue_category == "Spelling":
+                print("Spell checker called!")
+                corrected_text = spell_check_correction(shape.text) 
+                shape.text = corrected_text
+            
+            # Handle consistency issues by setting a uniform font size and color for all text in the shape
+            elif issue.issue_category == "Consistency":
+                for paragraph in shape.text_frame.paragraphs:
+                    for run in paragraph.runs:
+                        run.font.size = Pt(24)  # Set a consistent font size
+                        run.font.color.rgb = RGBColor(0, 0, 0)  # Set text color to black
+            else:
+                
+
+
+
+def spell_check_correction(text):
+    blob = TextBlob(text)
+    
+    # Correct the text
+    corrected_text = blob.correct()
+    
+    return str(corrected_text)
+
+
+
 def main():
 
-    slide_deck_path = "../data/01-coastal-presentation.pptx"
+
+    slide_deck_path = "../data/03-dickinson-basic.pptx"
+    
     slides_json = pptx_to_json(slide_deck_path)
+
+    output_slide_deck_path = "../data/03-dickinson-basic_fixed.pptx"
+    
+    prs = Presentation(slide_deck_path)
 
     for idx, slide_json in enumerate(slides_json):
         print(f'SLIDE {idx}')
         print('-------------------------------------')
-        # print('slide_json: ', slide_json)
+
+        for obj in slide_json['content']:
+            if len(obj['text'].split()) >= 10:
+                txt = obj['text']
+                print(f'\nFact Checking statement: {txt}')
+                fact_check_results = fact_check(issue.issue_label)
+                print('fact_check_results: ', fact_check_results)
+
         slide_response = extract_issues(slide_json)
 
-    # Pretty print the extracted issues
+        # Pretty print the extracted issues
         print("\nExtracted Issues:")
         for i, issue in enumerate(slide_response.issues, 1):
             print(f"\nIssue {i}:")
@@ -154,6 +256,11 @@ def main():
             print(f"  Category: {issue.issue_category}")
             print(f"  Label: {issue.issue_label}")
             print(f"  Reason: {issue.issue_reason}")
+
+            fix_issue_on_slide(prs, idx, issue)
+
+    prs.save(output_slide_deck_path)
+    print(f"Updated presentation saved at {output_slide_deck_path}")
 
 if __name__ == "__main__":
     main()
