@@ -57,6 +57,7 @@ Ideally, the tool should:
     - show image of the page and list issues
     - tick the once to solve
     - one page per view
+- audio dictation: where the user will activate his/her microphone and dictate what the PPT slide deck should contain then a fleet of agents should generate the slides ( images with Stable Diffusion, text, charts, etc. )
 
 ---
 
