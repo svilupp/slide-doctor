@@ -2,7 +2,7 @@ import requests
 from transformers import pipeline
 
 # Constants
-API_KEY = "BSAXYZFwgCtVk6qB8WOZ5TiO3tDlNCM"
+API_KEY = os.getenv("BRAVE_API_KEY")
 BRAVE_SEARCH_ENDPOINT = "https://api.search.brave.com/res/v1/web/search"
 
 # Maximum token length for the model (adjust if necessary)
