@@ -48,7 +48,7 @@ async def run_checker(client: MistralClientWrapper, model: str, checker: dict, u
     ]
     return issues
 
-async def process_presentation(pptx_path: str, config: Dict, user_context: str, slides_content: dict, screenshots: List[str]) -> List[DetectedIssue]:
+async def process_presentation(pptx_path: str, config: Dict, user_context: str, slides_content: dict, screenshots: dict) -> List[DetectedIssue]:
     # Initialize the client
     client = MistralClientWrapper(api_key=os.getenv("MISTRAL_API_KEY"))
     model_text = "mistral-large-latest"
@@ -72,13 +72,13 @@ async def process_presentation(pptx_path: str, config: Dict, user_context: str, 
     # Prepare tasks for screenshot-based checkers
     for checker in config['checkers']:
         if checker['type'] == 'screenshot':
-            for screenshot_path in screenshots:
+            for page_id, screenshot_path in screenshots.items():
                 all_tasks.append(run_checker(
                     client, model_screenshot,
                     checker, user_context, 
                     None, # no slide content
                     screenshot_path,
-                    extract_slide_number(screenshot_path),
+                    int(page_id),
                     pptx_path
                 ))
     
