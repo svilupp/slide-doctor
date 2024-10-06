@@ -1,6 +1,6 @@
 import asyncio
 from mistralai import Mistral
-from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type, wait_exponential
 import json
 import weave
 from pydantic import BaseModel
@@ -30,6 +30,10 @@ class MistralClientWrapper:
             }
         }
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+    )
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_fixed(1),
@@ -85,25 +89,3 @@ class MistralClientWrapper:
             })
         
         return messages
-
-# async def main():
-#     # Example usage
-#     client = MistralClientWrapper(api_key="your_api_key_here")
-    
-#     # Define your ResponseModel here
-#     class ExampleResponseModel(BaseModel):
-#         result: str
-
-#     messages = [
-#         {"role": "system", "content": "You are a helpful assistant."},
-#         {"role": "user", "content": "Hello, how are you?"}
-#     ]
-
-#     try:
-#         result = await client.complete_with_retry("mistral-small-latest", messages, ExampleResponseModel)
-#         print(f"Result: {result.result}")
-#     except Exception as e:
-#         print(f"An error occurred: {e}")
-
-# if __name__ == "__main__":
-#     asyncio.run(main())
