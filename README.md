@@ -7,7 +7,7 @@ Slide Doctor transforms your PowerPoint presentations into polished, professiona
 ![Demo Video](./assets/video.gif)
 
 > [!NOTE]
-This project has been developed over the weekend at the HackUK (October 2024)
+This project has been developed over the weekend at the Mistral AI London Hackathon (October 2024)
 
 ---
 
@@ -128,7 +128,7 @@ The demand for high-quality presentations is immense. Businesses, educators, and
 ---
 ## Acknowledgments
 
-Slide Doctor was developed as part of **Hack UK 2024**, hosted in October 2024 in London, UK. We thank all organizers and supporters who made this event possible.
+Slide Doctor was developed as part of **Mistral AI Hackathon**, hosted in London, October 2024 by Mistral AI, A16Z, and Cerebral Valley ("HackUK"). We thank all organizers and supporters who made this event possible.
 
 ---
 
