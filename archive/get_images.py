@@ -59,7 +59,7 @@ def convert_pptx_to_images(pptx_file, output_folder):
     pdf_to_images(pdf_path, output_folder)
 
 # Example usage
-pptx_file = 'updated_presentation.pptx'  # Replace with your PPTX file path
+pptx_file = 'data/03-dickinson-basic.pptx'  # Replace with your PPTX file path
 output_folder = 'pics'  # Replace with your desired output folder
 
 convert_pptx_to_images(pptx_file, output_folder)

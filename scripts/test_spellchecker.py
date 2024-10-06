@@ -11,9 +11,11 @@ weave.init("slide-doctor-spellchecker")
 async def main():
     # Initialize the client with your API key
     client = MistralClientWrapper(api_key=os.getenv("MISTRAL_API_KEY"))
-    model = "pixtral-12b-2409"
+    # model = "pixtral-12b-2409"
+    # image_path="data/03-dickinson-basic002.png"
     ## TODO: change to powerpoint text
-    image_path="data/03-dickinson-basic002.png"
+    model="mistral-large-latest"
+    image_path=None
     
     # Define system and user prompts
     issue_category = "spellchecker" ## determine by checker type
