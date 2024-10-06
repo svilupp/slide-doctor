@@ -35,7 +35,7 @@ class DetectedIssue(BaseModel):
     extracted_issue: ExtractedIssue = Field(
         description="The core issue information extracted from the document."
     )
-    category: IssueCategory = Field(
+    category: str = Field(
         description="The category of the issue, based on the type of checker that identified it."
     )
     page_id: int = Field(
