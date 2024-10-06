@@ -1,169 +1,94 @@
 import gradio as gr
-from pptx import Presentation
-from typing import List
+import shutil
 import json
-from models import ExtractedIssue, DetectedIssue, IssueCategory, IssueLocation
 import os
-import subprocess
-import fitz
-import base64
+import sys
+import asyncio
+from tqdm.asyncio import tqdm
+import json
+from typing import List, Dict
 
-merged_dict_global = {}
+# Add the project root directory to the Python path
+# project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root="."
+sys.path.insert(0, project_root)
 
-def convert_pptx_to_pdf(pptx_path, output_folder):
-    # Check if LibreOffice is installed
-    libreoffice_path = '/Applications/LibreOffice.app/Contents/MacOS/soffice'
-    if not os.path.exists(libreoffice_path):
-        raise FileNotFoundError("LibreOffice is not installed in the default location.")
+from utils.client import MistralClientWrapper
+from utils.utils import load_config, extract_slide_number
+from utils.models import ExtractedIssueList, DetectedIssue
+from utils.pptx_utils import extract_text_from_pptx
+from utils.prompts import build_system_prompt, build_user_prompt
+from utils.screenshots import convert_pptx_to_images
 
-    # Prepare the output folder
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+IMG_PLACEHOLDER = "https://via.placeholder.com/150"
 
-    # Convert the .pptx to .pdf using LibreOffice
-    command = [
-        libreoffice_path,
-        '--headless',
-        '--convert-to', 'pdf',
-        '--outdir', output_folder,
-        pptx_path
+async def run_checker(client: MistralClientWrapper, model: str, checker: dict, user_context: str, slide_content:str|None, image_path: str|None, slide_number: int, pptx_file: str) -> List[DetectedIssue]:
+    system_prompt=build_system_prompt(checker['task'], user_context, checker['criteria'])
+    user_prompt=build_user_prompt(slide_content)
+
+    messages = client.build_messages(
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        image_path=image_path
+    )
+    
+    result = await client.complete_with_retry(
+        model=model,
+        messages=messages,
+        ResponseModel=ExtractedIssueList
+    )
+    
+    issues=[
+        DetectedIssue(
+            extracted_issue=issue,
+            category=checker['name'],
+            page_id=slide_number,
+            file=pptx_file
+        ) for issue in result.issues
     ]
+    return issues
 
-    try:
-        subprocess.run(command, check=True)
-        print(f"Converted {pptx_path} to PDF successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"An error occurred while converting the file: {e}")
+async def process_presentation(pptx_path: str, config: Dict, user_context: str, slides_content: dict, screenshots: List[str]) -> List[DetectedIssue]:
+    # Initialize the client
+    client = MistralClientWrapper(api_key=os.getenv("MISTRAL_API_KEY"))
+    model_text = "mistral-large-latest"
+    model_screenshot = "pixtral-12b-2409"
 
-def pdf_to_images(pdf_path, output_folder):
-    # Ensure the output folder exists
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
-
-    # Open the PDF
-    doc = fitz.open(pdf_path)
-
-    # Dictionary to store slide ID and Base64 image strings
-    slide_images = {}
-
-    # Iterate through each page
-    for page_num in range(doc.page_count):
-        page = doc.load_page(page_num)  # Load the page
-        pix = page.get_pixmap()         # Render page to an image
-
-        # Define output path for the image
-        img_path = os.path.join(output_folder, f"page_{page_num + 1}.png")
-        pix.save(img_path)  # Save the image as PNG
-
-        # Convert image to Base64
-        with open(img_path, "rb") as img_file:
-            base64_string = base64.b64encode(img_file.read()).decode('utf-8')
-            slide_images[page_num + 1] = f"data:image/png;base64,{base64_string}"
-
-    return slide_images
-
-# Combined function to handle both conversions
-def convert_pptx_to_images(pptx_file, output_folder):
-    # Convert PPTX to PDF
-    convert_pptx_to_pdf(pptx_file, output_folder)
+    all_tasks = []
     
-    # Get the name of the converted PDF
-    pdf_path = os.path.join(output_folder, os.path.splitext(os.path.basename(pptx_file))[0] + '.pdf')
+    # Prepare tasks for text-based checkers
+    for checker in config['checkers']:
+        if checker['type'] == 'text':
+            # For each slide
+            for slide_number, slide_content in slides_content.items():
+                all_tasks.append(run_checker(
+                    client, model_text,
+                    checker, user_context, slide_content,
+                    None, # no image_path
+                    int(slide_number),
+                    pptx_path
+                ))
     
-    # Convert PDF to images and return slide images as a dictionary
-    slide_images = pdf_to_images(pdf_path, output_folder)
+    # Prepare tasks for screenshot-based checkers
+    for checker in config['checkers']:
+        if checker['type'] == 'screenshot':
+            for screenshot_path in screenshots:
+                all_tasks.append(run_checker(
+                    client, model_screenshot,
+                    checker, user_context, 
+                    None, # no slide content
+                    screenshot_path,
+                    extract_slide_number(screenshot_path),
+                    pptx_path
+                ))
     
-    # Return JSON object containing slide images
-    return json.dumps(slide_images, indent=4)
-
-
-def generate_mock_detected_issues() -> List[DetectedIssue]:
-    mock_issues = [
-        DetectedIssue(
-            extracted_issue=ExtractedIssue(
-                issue_description="The pie chart on slide 2 lacks clear labels, making it difficult for the audience to interpret the data accurately.",
-                element_location=IssueLocation.BODY_VISUAL,
-                element_identification_contains_text=None,
-                element_identification_verbatim="Pie chart without labels on slide 2",
-                severity="medium"
-            ),
-            category=IssueCategory.CHART,
-            page_id=2,
-            file="presentation.pptx"
-        ),
-        DetectedIssue(
-            extracted_issue=ExtractedIssue(
-                issue_description="There's a spelling error in the title of slide 2. 'Anual' should be 'Annual'.",
-                element_location=IssueLocation.TITLE,
-                element_identification_contains_text="Anual Report",
-                element_identification_verbatim=None,
-                severity="high"
-            ),
-            category=IssueCategory.SPELL,
-            page_id=2,
-            file="presentation.pptx"
-        ),
-        DetectedIssue(
-            extracted_issue=ExtractedIssue(
-                issue_description="The bullet points on slide 3 are not aligned consistently, creating a visually disorganized appearance.",
-                element_location=IssueLocation.BODY_TEXT,
-                element_identification_contains_text=None,
-                element_identification_verbatim="Misaligned bullet points on slide 3",
-                severity="low"
-            ),
-            category=IssueCategory.ALIGNMENT,
-            page_id=3,
-            file="presentation.pptx"
-        ),
-        DetectedIssue(
-            extracted_issue=ExtractedIssue(
-                issue_description="The bar graph on slide 3 uses colors that are too similar, making it challenging to distinguish between different data sets.",
-                element_location=IssueLocation.BODY_VISUAL,
-                element_identification_contains_text=None,
-                element_identification_verbatim="Bar graph with similar colors on slide 3",
-                severity="medium"
-            ),
-            category=IssueCategory.CHART,
-            page_id=3,
-            file="presentation.pptx"
-        ),
-        DetectedIssue(
-            extracted_issue=ExtractedIssue(
-                issue_description="There's a typo in the footer of slide 3. 'Confidental' should be 'Confidential'.",
-                element_location=IssueLocation.FOOTER,
-                element_identification_contains_text="Confidental",
-                element_identification_verbatim=None,
-                severity="high"
-            ),
-            category=IssueCategory.SPELL,
-            page_id=3,
-            file="presentation.pptx"
-        )
-    ]
+    # Run all checkers
+    results = await tqdm.gather(*all_tasks, desc="Processing all checkers")
     
-    return mock_issues
-
-
-# Placeholder sample image path
-sample_image_path = "https://via.placeholder.com/150"
-
-def extract_text_from_pptx(file):
-    prs = Presentation(file.name)
+    # Combine all results
+    all_issues = [issue for result in results for issue in result]
     
-    slides_content = {}
-    
-    for slide_index, slide in enumerate(prs.slides):
-        slide_text = []
-        for shape in slide.shapes:
-            if shape.has_text_frame:
-                slide_text.append(shape.text)
-        # Join all text in the slide into a single string
-        slide_content = "\n".join(slide_text)
-        # print(f"Slide {slide_index + 1} Content:\n{slide_content}\n{'-'*40}")
-        slides_content[slide_index + 1] = slide_content  # Slide index as key (1-based)
-    
-    return json.dumps(slides_content, indent=4)
-
+    return all_issues
 
 def create_slide_html(issues_data, merged_dict):
     slides = {}
@@ -180,7 +105,7 @@ def create_slide_html(issues_data, merged_dict):
     # Create the HTML structure for each slide
     for slide_number, issues in slides.items():
         # Access the image path directly from merged_dict
-        img_path = merged_dict.get(str(slide_number), {}).get("img_path", sample_image_path)
+        img_path = merged_dict.get(str(slide_number), {}).get("img_path", IMG_PLACEHOLDER)
 
         html_content += f"<div style='border:1px solid #ddd; padding: 10px; margin: 10px 0;'><h3>Slide {slide_number}</h3>"
         html_content += f"<img src='{img_path}' alt='Slide {slide_number} Preview' style='width:150px;'/>"
@@ -195,28 +120,37 @@ def create_slide_html(issues_data, merged_dict):
 
 
 def process_ppt(context_info, ppt_upload):
+    # Generate mock issues data
+    config = load_config('config/config.yaml')
+    user_context = context_info
+    output_folder = 'pics' 
+    # Delete the 'pics' folder if it exists
+    if os.path.exists('pics'):
+        shutil.rmtree('pics')
+        print("Deleted 'pics' folder")
+
+    print("FILE: ",ppt_upload)
+
     # Extract text from the uploaded PowerPoint file
     slides_content = extract_text_from_pptx(ppt_upload)
-    img_paths = convert_pptx_to_images(ppt_upload, '../pics')
-
-    # print("slides_content: ", slides_content)
-    # print("img_paths: ", img_paths)
-
-    slides_content = json.loads(slides_content)
-    img_paths = json.loads(img_paths)
+    print("SLIDES ", slides_content)
+    # Process screenshots
+    img_paths = json.loads(convert_pptx_to_images(ppt_upload, output_folder))
+    print("PATHS ", img_paths)
+    # screenshots = ['data/03-dickinson-basic002.png']
 
     merged_dict = {}
     for key in slides_content.keys():
         if key in img_paths:
+            print("query", key, " ",img_paths)
             merged_dict[key] = {
-                "img_path": img_paths[key],
-                "text": slides_content[key]
+                "img_path": img_paths[str(key)],
+                "text": slides_content[str(key)]
             }
 
     print("merged_dict: ", len(merged_dict))    
-    
-    # Generate mock issues data
-    issues_data = generate_mock_detected_issues()
+ 
+    issues_data = asyncio.run(process_presentation(ppt_upload.name, config, user_context, slides_content, img_paths))
     
     # Create the HTML content for slide view
     slide_html = create_slide_html(issues_data, merged_dict)
