@@ -6,4 +6,4 @@ from .image_utils import encode_image, get_image_data_url
 from .pptx_utils import extract_text_from_pptx
 from .client import MistralClientWrapper
 from .screenshots import convert_pptx_to_images
-from .deduplication import dedupe_by_similarity
+from .deduplication import dedupe_by_similarity, deduplicate_issues

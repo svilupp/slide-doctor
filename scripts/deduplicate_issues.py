@@ -4,7 +4,7 @@ from utils.client import MistralClientWrapper
 import numpy as np
 from typing import List
 from utils.models import DetectedIssue, ExtractedIssue, IssueLocation
-from utils.deduplication import dedupe_by_similarity
+from utils.deduplication import dedupe_by_similarity, deduplicate_issues
 
 # def cosine_similarity(a, b):
 #     """Calculate cosine similarity between two vectors."""
@@ -37,6 +37,25 @@ from utils.deduplication import dedupe_by_similarity
     
 #     return keep_issues
 
+# def deduplicate_issues(issues: List[DetectedIssue], client: MistralClientWrapper) -> List[DetectedIssue]:
+#     # Extract issue descriptions
+#     descriptions = [issue.extracted_issue.issue_description for issue in issues]
+    
+#     # Get embeddings using the client
+#     model = "mistral-embed"  # Specify the appropriate embedding model
+#     embeddings = client.get_embeddings(model, descriptions)
+    
+#     # Extract severities
+#     severities = [issue.extracted_issue.severity for issue in issues]
+    
+#     # Calculate cosine distances and get keep_issues mask
+#     keep_issues = dedupe_by_similarity(embeddings, severities)
+    
+#     # Create a new list with deduplicated issues
+#     deduplicated_issues = [issue for issue, keep in zip(issues, keep_issues) if keep]
+    
+#     return deduplicated_issues
+
 # Create toy data to test calculate_cosine_distances
 def create_toy_data():
     # Create sample embeddings
@@ -59,24 +78,6 @@ def create_toy_data():
 # embeddings, severities = create_toy_data()
 # keep_issues = dedupe_by_similarity(embeddings, severities)
 
-def deduplicate_issues(issues: List[DetectedIssue], client: MistralClientWrapper) -> List[DetectedIssue]:
-    # Extract issue descriptions
-    descriptions = [issue.extracted_issue.issue_description for issue in issues]
-    
-    # Get embeddings using the client
-    model = "mistral-embed"  # Specify the appropriate embedding model
-    embeddings = client.get_embeddings(model, descriptions)
-    
-    # Extract severities
-    severities = [issue.extracted_issue.severity for issue in issues]
-    
-    # Calculate cosine distances and get keep_issues mask
-    keep_issues = dedupe_by_similarity(embeddings, severities)
-    
-    # Create a new list with deduplicated issues
-    deduplicated_issues = [issue for issue, keep in zip(issues, keep_issues) if keep]
-    
-    return deduplicated_issues
 
 # Create toy examples with DetectedIssues including a few duplicates
 def create_toy_detected_issues():
@@ -150,6 +151,6 @@ if __name__ == "__main__":
     toy_issues = create_toy_detected_issues()
     client = MistralClientWrapper(api_key=os.getenv("MISTRAL_API_KEY"))
     # client.get_embeddings("mistral-embed",["say hi", "say hi"])
-    deduplicated_toy_issues = deduplicate_issues(toy_issues, client)
+    deduplicated_toy_issues = deduplicate_issues(client, "mistral-embed", toy_issues)
     print(f"Original issues: {len(toy_issues)}")
     print(f"Deduplicated issues: {len(deduplicated_toy_issues)}")
