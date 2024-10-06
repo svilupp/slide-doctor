@@ -6,18 +6,32 @@ import asyncio
 import weave
 from utils.client import MistralClientWrapper
 from utils.models import ExtractedIssueList
+from utils.pptx_utils import extract_text_from_pptx
 weave.init("slide-doctor-spellchecker")
 
 async def main():
     # Initialize the client with your API key
     client = MistralClientWrapper(api_key=os.getenv("MISTRAL_API_KEY"))
-    model = "pixtral-12b-2409"
-    ## TODO: change to powerpoint text
-    image_path="data/03-dickinson-basic002.png"
+    # model = "pixtral-12b-2409"
+    # image_path="data/03-dickinson-basic002.png"
+    ## change to powerpoint text
+    model = "mistral-large-latest"
+    image_path=None
+    pptx_path = "data/03-dickinson-basic.pptx"
+
+    ## Read PPTX into dictionary and read slide 3
+    slides = extract_text_from_pptx(pptx_path, include_title_prefix=True)
+    slide_content = slides['2']
     
     # Define system and user prompts
+    slide_text=f"""
+    ### Slide Content
+
+    {slide_content}
+    """
     issue_category = "spellchecker" ## determine by checker type
     user_context="Investor presentation for our business, Dickinson. Very professional."
+
     ## Task details -- spellchecker
     checker_task = "identify spelling and grammar errors, inconsistency, bad punctuation and bad spacing"
     checker_list="""
@@ -51,7 +65,8 @@ async def main():
     Be very selective and return only the MOST important issues that require immediate attention.
     If no issues are critical, you return an empty list.
     """
-    user_prompt = "Please help me improve this presentation slide."
+    user_prompt = f"Please help me improve this presentation slide.{slide_text}"
+    print(f"USER: {user_prompt}")
     
     # Build messages
     messages = client.build_messages(

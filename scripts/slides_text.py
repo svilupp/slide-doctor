@@ -7,3 +7,5 @@ from utils import extract_text_from_pptx
 
 slides = extract_text_from_pptx("data/03-dickinson-basic.pptx")
 print(slides)
+
+slides['2']
