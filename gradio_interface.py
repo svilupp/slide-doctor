@@ -109,7 +109,7 @@ def create_slide_html(issues_data, merged_dict):
         img_path = merged_dict.get(str(slide_number), {}).get("img_path", IMG_PLACEHOLDER)
 
         html_content += f"<div style='border:1px solid #ddd; padding: 10px; margin: 10px 0;'><h3>Slide {slide_number}</h3>"
-        html_content += f"<img src='{img_path}' alt='Slide {slide_number} Preview' style='width:150px;'/>"
+        html_content += f"<img src='{img_path}' alt='Slide {slide_number} Preview' style='width:400px;'/>"
         for i, issue in enumerate(issues, 1):
             issue_description = issue.extracted_issue.issue_description
             severity = issue.extracted_issue.severity.capitalize()
@@ -151,8 +151,6 @@ def process_ppt(context_info, ppt_upload):
                 "img_path": img_payload,
                 "text": slides_content[str(key)]
             }
-
-    print("merged_dict: ", len(merged_dict))    
  
     issues_data = asyncio.run(process_presentation(ppt_upload.name, config, user_context, slides_content, img_paths))
     
