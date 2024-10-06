@@ -1,5 +1,5 @@
 from typing import List
-from .models import ExtractedIssue, DetectedIssue, IssueCategory, IssueLocation
+from .models import ExtractedIssue, DetectedIssue, IssueLocation
 
 
 def generate_mock_detected_issues() -> List[DetectedIssue]:
@@ -12,7 +12,7 @@ def generate_mock_detected_issues() -> List[DetectedIssue]:
                 element_identification_verbatim="Pie chart without labels on slide 2",
                 severity="medium"
             ),
-            category=IssueCategory.CHART,
+            category="Chart",
             page_id=2,
             file="presentation.pptx"
         ),
@@ -24,7 +24,7 @@ def generate_mock_detected_issues() -> List[DetectedIssue]:
                 element_identification_verbatim=None,
                 severity="high"
             ),
-            category=IssueCategory.SPELL,
+            category="Spelling",
             page_id=2,
             file="presentation.pptx"
         ),
@@ -36,7 +36,7 @@ def generate_mock_detected_issues() -> List[DetectedIssue]:
                 element_identification_verbatim="Misaligned bullet points on slide 3",
                 severity="low"
             ),
-            category=IssueCategory.ALIGNMENT,
+            category="Alignment",
             page_id=3,
             file="presentation.pptx"
         ),
@@ -48,7 +48,7 @@ def generate_mock_detected_issues() -> List[DetectedIssue]:
                 element_identification_verbatim="Bar graph with similar colors on slide 3",
                 severity="medium"
             ),
-            category=IssueCategory.CHART,
+            category="Chart",
             page_id=3,
             file="presentation.pptx"
         ),
@@ -60,7 +60,7 @@ def generate_mock_detected_issues() -> List[DetectedIssue]:
                 element_identification_verbatim=None,
                 severity="high"
             ),
-            category=IssueCategory.SPELL,
+            category="Spelling",
             page_id=3,
             file="presentation.pptx"
         )

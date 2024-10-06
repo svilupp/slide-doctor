@@ -14,12 +14,13 @@ project_root="."
 sys.path.insert(0, project_root)
 
 from utils.client import MistralClientWrapper
-from utils.utils import load_config, extract_slide_number
+from utils.utils import load_config
 from utils.models import ExtractedIssueList, DetectedIssue, IsValidIssue
 from utils.pptx_utils import extract_text_from_pptx
 from utils.prompts import build_system_prompt, build_user_prompt
 from utils.screenshots import convert_pptx_to_images
 from utils.image_utils import encode_image, get_image_data_url
+from utils.deduplication import deduplicate_issues
 
 IMG_PLACEHOLDER = "https://via.placeholder.com/150"
 
@@ -116,6 +117,7 @@ async def process_presentation(pptx_path: str, config: Dict, user_context: str, 
     model_text = "mistral-large-latest"
     model_screenshot = "pixtral-12b-2409"
     model_validate = "mistral-small-latest"
+    model_embed ="mistral-embed"
 
     all_tasks = []
     
@@ -159,7 +161,19 @@ async def process_presentation(pptx_path: str, config: Dict, user_context: str, 
     
     # Filter out invalid issues
     valid_issues = [issue for issue, is_valid in zip(all_issues, valid_issues) if is_valid]
-    return all_issues
+
+    # Deduplicate
+    print("Deduplicating issues")
+    deduplicated_issues = deduplicate_issues(client, model_embed, valid_issues)
+    
+    print(f"Original issues: {len(all_issues)}")
+    print(f"Valid issues: {len(valid_issues)}")
+    print(f"Deduplicated issues: {len(deduplicated_issues)}")
+
+    # Sort issues by severity (high, medium, low)
+    severity_order = {'high': 0, 'medium': 1, 'low': 2}
+    deduplicated_issues.sort(key=lambda x: severity_order.get(x.extracted_issue.severity.lower(), 3))
+    return deduplicated_issues
 
 def create_slide_html(issues_data, merged_dict):
     slides = {}
@@ -194,21 +208,18 @@ def process_ppt(context_info, ppt_upload):
     # Generate mock issues data
     config = load_config('config/config.yaml')
     user_context = context_info
-    output_folder = 'pics' 
+    output_folder = 'data_temp' 
 
     # Delete the 'pics' folder if it exists
-    if os.path.exists('pics'):
-        shutil.rmtree('pics')
-        print("Deleted 'pics' folder")
-
-    print("FILE: ",ppt_upload.name)
+    if os.path.exists('data_temp'):
+        shutil.rmtree('data_temp')
+        print("Deleted old 'data_temp' folder")
 
     # Extract text from the uploaded PowerPoint file
     slides_content = extract_text_from_pptx(ppt_upload)
-    print("SLIDES ", slides_content)
     # Process screenshots
+    ## TODO: remove json layer! unnecessary
     img_paths = json.loads(convert_pptx_to_images(ppt_upload, output_folder))
-    print("PATHS ", img_paths)
 
     merged_dict = {}
     for key in slides_content.keys():
@@ -241,7 +252,7 @@ with gr.Blocks() as demo:
     gr.Markdown("Slide Doctor")
 
     context_input = gr.Textbox(label="Context Information", placeholder="Enter context for the presentation")
-    ppt_upload = gr.File(label="Upload PPT", file_count="single", file_types=[".ppt", ".pptx"])
+    ppt_upload = gr.File(label="Upload PPTX", file_count="single", file_types=[".pptx"])
 
     generate_button = gr.Button("Analyse")
 

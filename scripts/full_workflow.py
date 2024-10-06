@@ -92,6 +92,7 @@ async def process_presentation(pptx_path: str, config: Dict, user_context: str) 
 
 async def main():
     config = load_config('config/config.yaml')
+    ## To be provided via Gradio
     pptx_path = 'data/03-dickinson-basic.pptx'
     user_context="Investor presentation for our business, Dickinson. Very professional."
 

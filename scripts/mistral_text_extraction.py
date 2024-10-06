@@ -19,7 +19,7 @@ from textblob import TextBlob
 
 
 # Constants for fact-checking
-BRAVE_API_KEY = "BSAXYZFwgCtVk6qB8WOZ5TiO3tDlNCM"
+BRAVE_API_KEY = os.getenv("BRAVE_API_KEY")
 BRAVE_SEARCH_ENDPOINT = "https://api.search.brave.com/res/v1/web/search"
 
 # Fact-Checking NLP Model
