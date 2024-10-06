@@ -226,12 +226,12 @@ def process_ppt(context_info, ppt_upload):
 
 # Building the Gradio interface
 with gr.Blocks() as demo:
-    gr.Markdown("# Context Brief")
+    gr.Markdown("Slide Doctor")
 
     context_input = gr.Textbox(label="Context Information", placeholder="Enter context for the presentation")
     ppt_upload = gr.File(label="Upload PPT", file_count="single", file_types=[".ppt", ".pptx"])
 
-    generate_button = gr.Button("Generate Page View")
+    generate_button = gr.Button("Analyse")
 
     gr.Markdown("### Summary")
     summary_output = gr.Textbox(label="Summary", lines=4, interactive=False)
