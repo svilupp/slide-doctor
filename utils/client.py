@@ -2,6 +2,7 @@ import asyncio
 from mistralai import Mistral
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 import json
+import weave
 from pydantic import BaseModel
 from typing import Any, Dict
 from .image_utils import get_image_data_url, encode_image
@@ -34,6 +35,7 @@ class MistralClientWrapper:
         wait=wait_fixed(1),
         retry=retry_if_exception_type((ValueError, json.JSONDecodeError))
     )
+    @weave.op()
     async def complete_with_retry(self, model: str, messages: list, ResponseModel: BaseModel) -> BaseModel:
         tools = self.build_tools_and_choice(ResponseModel)
         
