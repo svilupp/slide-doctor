@@ -4,6 +4,8 @@
 
 Slide Doctor will make Powerpoint a breeze. Now everyone can have hi-quality, professional looking PPT slides. It aims to be the ultimate **Multi-modal A.I.** tool, powered by **Pixtral 12B** for fixing PPT Presentations.
 
+![video](./video.gif)
+
 ---
 
 ## Install
