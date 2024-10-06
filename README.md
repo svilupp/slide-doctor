@@ -1,6 +1,33 @@
 # Slide Doctor
 
-**Slide Doctor** aims to be the ultimate **Multi-modal A.I.** tool for fixing PPT Presentations.
+**Slide Doctor: Your High-Quality Multi-Modal A.I. Agent for Prescribing Perfect, Professional PPTs**
+
+Slide Doctor will make Powerpoint a breeze. Now everyone can have hi-quality, professional looking PPT slides. It aims to be the ultimate **Multi-modal A.I.** tool, powered by **Pixtral 12B** for fixing PPT Presentations.
+
+---
+
+## Install
+
+You have to have `uv`
+
+```sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv sync
+```
+
+---
+
+## Usage
+
+Run with ( don't forget to add your Mistral API Key in the Env ):
+
+```sh
+uv run
+```
+
+---
+
+## Details
 
 The tool will:
 
