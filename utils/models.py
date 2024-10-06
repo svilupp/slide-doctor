@@ -30,6 +30,12 @@ class ExtractedIssue(BaseModel):
     severity: str = Field(
         description="The severity level of the issue given the provided context: 'low', 'medium', or 'high'."
     )
+    
+class IsValidIssue(BaseModel):
+    is_valid: bool = Field(
+        description="Indicates whether the issue description is valid and useful."
+    )
+
   
 class DetectedIssue(BaseModel):
     extracted_issue: ExtractedIssue = Field(

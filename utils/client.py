@@ -1,6 +1,6 @@
 import asyncio
 from mistralai import Mistral
-from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type, wait_exponential
 import json
 import weave
 from pydantic import BaseModel
@@ -30,6 +30,10 @@ class MistralClientWrapper:
             }
         }
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+    )
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_fixed(1),
